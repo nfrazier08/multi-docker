@@ -1,0 +1,23 @@
+sudo: required
+services:
+ - docker
+
+before_install:
+  - docker build -t nfrazier/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+ - docker run -e CI=true nfrazier/react-test npm test
+
+after_success:
+ - docker build -t nfrazier/multi-client ./client
+ - docker build -t nfrazier/multi-nginx ./nginx
+ - docker build -t nfrazier/multi-server ./server
+ - docker build -t nfrazier/multi-worker ./worker
+ # log in to the docker CLI
+ - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+ # Take images and push to docker hub
+ - docker push nfrazier/multi-client
+ - docker push nfrazier/multi-nginx
+ - docker push nfrazier/multi-server
+ - docker push nfrazier/multi-worker
